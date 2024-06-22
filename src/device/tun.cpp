@@ -16,7 +16,7 @@ TunDevice::TunDevice(const std::optional<std::string_view> dev)
     _fd = open(TAP_PATH, O_RDWR);
 
     if (_fd < 0) {
-        throw std::system_error(std::error_code(), "tun.cpp: TunDevice: could not open TUN/TAP device");
+        throw std::system_error(std::error_code(), "tun.cpp: TunDevice(): could not open TUN/TAP device");
     }
 
     struct ifreq ifr = {};
@@ -31,7 +31,7 @@ TunDevice::TunDevice(const std::optional<std::string_view> dev)
     if (err < 0) {
         close(_fd);
         std::cout << "errno: " << strerror(errno) << '\n';
-        throw std::system_error(std::error_code(), "tun.cpp: TunDevice: could not ioctl TUN/TAP device");
+        throw std::system_error(std::error_code(), "tun.cpp: TunDevice(): could not ioctl TUN/TAP device");
     }
 
     _name = ifr.ifr_name;

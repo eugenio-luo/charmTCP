@@ -31,9 +31,9 @@ class TunDevice
 
         TunDevice& operator=(TunDevice&& other);
 
-        std::string name() const { return _name; };
+        std::string name() const { return _name; }
         
-        int fd() const {return _fd; };
+        int fd() const { return _fd; }
 };
 
 #endif
