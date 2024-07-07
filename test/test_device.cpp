@@ -2,7 +2,8 @@
 
 #include "tun.hpp"
 
-TEST(TunDeviceTest, TunDeviceCreation) {
+TEST(TunDeviceTest, TunDeviceCreation) 
+{
     
     constexpr char name[] = "TESTNAME";
 
