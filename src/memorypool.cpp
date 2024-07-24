@@ -97,3 +97,15 @@ void Memory::BuddyPool::deallocate(void *ptr, std::size_t size)
     mergeBlock(static_cast<unsigned char*>(ptr), sizeOrder);
     ptr = nullptr;
 }
+
+void Memory::consume(MacAddr& dest, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint8_t) * 6 > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::consume(): the requested memory would overflow the buffer\n");
+    } 
+
+    for (uint8_t& byte : dest.addr) {
+        byte = static_cast<uint8_t>(buffer[idx]);
+        idx += sizeof(uint8_t);
+    }
+}

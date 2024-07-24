@@ -8,6 +8,8 @@
 #include <memory>
 #include <stdexcept>
 
+#include "types.hpp"
+
 namespace Memory 
 {
     template <typename T>
@@ -34,7 +36,7 @@ namespace Memory
             T* allocate()
             {
                 if (_freeBlocks.empty()) {
-                    throw std::runtime_error("memorypool.cpp: Memory::ObjectPool<T>::allocate(): there aren't any free blocks");
+                    throw std::runtime_error("memorypool.hpp: Memory::ObjectPool<T>::allocate(): there aren't any free blocks");
                 }
             
                 std::size_t blockIndex = _freeBlocks.top();
@@ -47,7 +49,7 @@ namespace Memory
             {
                 T* block = static_cast<T*>(ptr); 
                 if (block == nullptr) {
-                    throw std::runtime_error("memorypool.cpp: Memory::ObjectPool<T>::deallocate(): block is nullptr");
+                    throw std::runtime_error("memorypool.hpp: Memory::ObjectPool<T>::deallocate(): block is nullptr");
                 }
             
                 std::size_t blockIndex = block - &(_memory[0]);
@@ -140,8 +142,8 @@ namespace Memory
                 static_assert(std::is_pointer<T>::value, "Expected pointer");
 
                 if (size > _totalMemory) {
-                throw std::runtime_error("memorypool.cpp: Memory::BuddyPool::allocate(): asking for more memory than available");
-    }
+                    throw std::runtime_error("memorypool.hpp: Memory::BuddyPool::allocate(): asking for more memory than available");
+                }
 
                 std::size_t sizeOrder = getOrder(size);
     
@@ -169,5 +171,29 @@ namespace Memory
             
             std::size_t totalMemory() { return _totalMemory; }
     };
+    
+    template<typename T>
+    void consume(T& dest, char *buffer, std::size_t& idx, std::size_t bufferSize)
+    {
+        if (idx + sizeof(T) > bufferSize) {
+            throw std::runtime_error("memorypool.hpp: Memory::consume(): the requested memory would overflow the buffer\n");
+        }
+
+        dest = static_cast<T>(buffer[idx]);
+        idx += sizeof(T);
+    }
+
+    void consume(MacAddr& dest, char *buffer, std::size_t& idx, std::size_t bufferSize);
+    
+    template<typename T>
+    void consumePointer(T*& dest, char *buffer, std::size_t& idx, std::size_t bufferSize, std::size_t size)
+    {
+        if (idx + sizeof(T) * size > bufferSize) {
+            throw std::runtime_error("memorypool.hpp: Memory::consumePointer(): the requested memory would overflow the buffer\n");
+        }
+
+        dest = static_cast<T*>(buffer + idx);
+        idx += sizeof(T) * size;
+    }
 }
 #endif
