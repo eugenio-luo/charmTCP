@@ -10,6 +10,8 @@ class TestClass
     int a;
     char b;
     float c;
+
+    char d[1300];
 };
 
 class ObjectPoolTest : public testing::Test
@@ -90,5 +92,22 @@ TEST_F(ObjectPoolTest, nullDeallocation)
             throw;
         }
     }, std::runtime_error);
+}
 
+#define PERFORMANCE_TESTS   1000
+
+TEST_F(ObjectPoolTest, objectPoolPerformance)
+{
+    for (int i = 0; i < PERFORMANCE_TESTS; ++i) {
+        TestClass* object = _objectPool.allocate();       
+        _objectPool.deallocate(object);
+    }
+}
+
+TEST_F(ObjectPoolTest, DefaultNewPerformance)
+{
+    for (int i = 0; i < PERFORMANCE_TESTS; ++i) {
+        TestClass* object = new TestClass();       
+        delete object;
+    }
 }
