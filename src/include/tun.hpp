@@ -5,13 +5,20 @@
 #include <string_view>
 #include <memory>
 
+#include "types.hpp"
+
+MacAddr getDevMacAddr(void); 
+
 class TunDevice
 {
     private:
         static constexpr char TAP_PATH[] = "/dev/net/tun";
             
-        int _fd = -1;
-        std::string _name{};
+        int         _fd = -1;
+        std::string _name;
+        MacAddr     _addr;
+
+        MacAddr getMacAddr();
 
     public:
 
@@ -32,8 +39,12 @@ class TunDevice
         TunDevice& operator=(TunDevice&& other);
 
         std::string name() const { return _name; }
-        
-        int fd() const { return _fd; }
+        MacAddr     addr() const { return _addr; }
+        int         fd()   const { return _fd;   }
+    
+        int readBuf(char* buf, size_t count);
+
+        int writeBuf(char* buf, size_t count);
 };
 
 #endif
