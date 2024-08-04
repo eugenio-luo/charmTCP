@@ -1,7 +1,9 @@
 #ifndef MEMORYPOOL_HPP
 #define MEMORYPOOL_HPP
 
+#include <arpa/inet.h>
 #include <cstdint>
+#include <cstring>
 #include <stack>
 #include <vector>
 #include <list>
@@ -179,9 +181,29 @@ namespace Memory
             throw std::runtime_error("memorypool.hpp: Memory::consume(): the requested memory would overflow the buffer\n");
         }
 
-        dest = static_cast<T>(buffer[idx]);
+        T* ptr = reinterpret_cast<T*>(buffer + idx);
+        switch (sizeof(T)) {
+        case 1:
+            dest = *ptr;
+            break;
+
+        case 2:
+            dest = ntohs(*ptr);
+            break;
+
+        case 4:
+            dest = ntohl(*ptr);
+            break;
+
+        default:
+            throw std::runtime_error("memorypool.hpp: Memory::consume(): size of object bigger than what ntoh can convert\n");
+        }
         idx += sizeof(T);
     }
+
+    void consume(IP::Fields1& dest, char *buffer, std::size_t& idx, std::size_t bufferSize);
+    
+    void consume(IP::Fields2& dest, char *buffer, std::size_t& idx, std::size_t bufferSize);
 
     void consume(MacAddr& dest, char *buffer, std::size_t& idx, std::size_t bufferSize);
     
@@ -193,6 +215,53 @@ namespace Memory
         }
 
         dest = static_cast<T*>(buffer + idx);
+        idx += sizeof(T) * size;
+    }
+
+    template<typename T>
+    void write(const T& src, char *buffer, std::size_t& idx, std::size_t bufferSize)
+    {
+        if (idx + sizeof(T) > bufferSize) {
+            throw std::runtime_error("memorypool.hpp: Memory::write(): writing the memory would overflow the buffer\n");
+        }
+
+        T* ptr = reinterpret_cast<T*>(buffer + idx);
+        switch (sizeof(T)) {
+        case 1:
+            *ptr = src;
+            break;
+
+        case 2:
+            *ptr = htons(src);
+            break;
+
+        case 4:
+            *ptr = htonl(src);
+            break;
+
+        default:
+            throw std::runtime_error("memorypool.hpp: Memory::write(): size of object bigger than what ntoh can convert\n");
+        }
+        idx += sizeof(T);
+    }
+
+    void write(const IP::Fields1& src, char *buffer, std::size_t& idx, std::size_t bufferSize);
+    
+    void write(const IP::Fields2& src, char *buffer, std::size_t& idx, std::size_t bufferSize);
+    
+    void write(const MacAddr& src, char *buffer, std::size_t& idx, std::size_t bufferSize);
+
+    template<typename T>
+    void writePointer(T*& src, char *buffer, std::size_t& idx, std::size_t bufferSize, std::size_t size)
+    {
+        if (idx + sizeof(T) * size > bufferSize) {
+            throw std::runtime_error("memorypool.hpp: Memory::writePointer(): writing the memory would overflow the buffer\n");
+        }
+
+        T* ptr = reinterpret_cast<T*>(buffer + idx);
+        for (size_t i = 0; i < size; ++i) {
+            ptr[i] = src[i];
+        }
         idx += sizeof(T) * size;
     }
 }

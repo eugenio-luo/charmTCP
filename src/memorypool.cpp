@@ -98,6 +98,34 @@ void Memory::BuddyPool::deallocate(void *ptr, std::size_t size)
     ptr = nullptr;
 }
 
+void Memory::consume(IP::Fields1& dest, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint8_t) > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::consume(): the requested memory would overflow the buffer\n");
+    }
+
+    uint8_t val = static_cast<uint8_t>(buffer[idx]);
+
+    dest._version = val >> 4;
+    dest._ihl     = val & 0xF; 
+
+    idx += sizeof(uint8_t);
+}
+
+void Memory::consume(IP::Fields2& dest, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint16_t) > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::consume(): the requested memory would overflow the buffer\n");
+    }
+
+    uint16_t val = ntohs(*reinterpret_cast<uint16_t*>(buffer + idx));
+
+    dest._flags      = val >> 13;
+    dest._fragOffset = val & 0x1FFF; 
+
+    idx += sizeof(uint16_t);
+}
+
 void Memory::consume(MacAddr& dest, char *buffer, std::size_t& idx, std::size_t bufferSize)
 {
     if (idx + sizeof(uint8_t) * 6 > bufferSize) {
@@ -106,6 +134,49 @@ void Memory::consume(MacAddr& dest, char *buffer, std::size_t& idx, std::size_t 
 
     for (uint8_t& byte : dest.addr) {
         byte = static_cast<uint8_t>(buffer[idx]);
+        idx += sizeof(uint8_t);
+    }
+}
+
+void Memory::write(const IP::Fields1& src, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint8_t) > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::write(): writing the memory would overflow the buffer\n");
+    }
+
+    uint8_t *ptr = reinterpret_cast<uint8_t*>(buffer + idx);
+
+    *ptr = src._version << 4;
+    *ptr |= src._ihl & 0xF; 
+
+    idx += sizeof(uint8_t);
+}
+
+void Memory::write(const IP::Fields2& src, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint16_t) > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::write(): writing the memory would overflow the buffer\n");
+    }
+
+    uint16_t *ptr = reinterpret_cast<uint16_t*>(buffer + idx);
+
+    uint16_t val = src._flags << 13;
+    val |= src._fragOffset & 0x1FFF;
+
+    *ptr = ntohs(val);
+
+    idx += sizeof(uint16_t);
+}
+
+void Memory::write(const MacAddr& src, char *buffer, std::size_t& idx, std::size_t bufferSize)
+{
+    if (idx + sizeof(uint8_t) * 6 > bufferSize) {
+        throw std::runtime_error("memorypool.hpp: Memory::write(): writing the memory would overflow the buffer\n");
+    } 
+
+    uint8_t *ptr = reinterpret_cast<uint8_t*>(buffer + idx);
+    for (const uint8_t byte : src.addr) {
+        *(ptr++) = byte;
         idx += sizeof(uint8_t);
     }
 }
